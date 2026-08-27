@@ -8,6 +8,7 @@ The inputs are fixed for reproducible rebuilds:
 
 - `actions/runner-images` Ubuntu Slim `20260728.2` at commit
   `eac270ed77ebb2e5896c8df1a13f81fbd71ed3b7`
+- Go `1.24.13`, the fixed `ubuntu-24.04` default at that runner-images commit
 - `ghcr.io/actions/actions-runner:2.336.0`
 
 Run **Build Actions runner image** manually in GitHub Actions. The workflow

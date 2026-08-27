@@ -11,6 +11,7 @@ env:
   IMAGE: ghcr.io/yunwei37/github-actions-runner
   RUNNER_IMAGES_REF: eac270ed77ebb2e5896c8df1a13f81fbd71ed3b7
   RUNNER_IMAGES_VERSION: "20260728.2"
+  GO_VERSION: "1.24.13"
   RUNNER_VERSION: "2.336.0"
 
 jobs:
@@ -36,7 +37,7 @@ jobs:
 
       - name: Build the ARC-compatible runner
         env:
-          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-runner-${{ env.RUNNER_VERSION }}
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}
         run: |
           docker build \
             --build-arg SLIM_IMAGE=local/ubuntu-slim:${RUNNER_IMAGES_REF} \
@@ -48,7 +49,7 @@ jobs:
       - name: Publish the immutable runner image
         env:
           GHCR_TOKEN: ${{ github.token }}
-          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-runner-${{ env.RUNNER_VERSION }}
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}
         run: |
           printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
           docker push "${IMAGE}:${TAG}"
