@@ -12,6 +12,7 @@ env:
   RUNNER_IMAGES_REF: eac270ed77ebb2e5896c8df1a13f81fbd71ed3b7
   RUNNER_IMAGES_VERSION: "20260728.2"
   GO_VERSION: "1.24.13"
+  IMAGE_REVISION: "2"
   RUNNER_VERSION: "2.336.0"
 
 jobs:
@@ -37,7 +38,7 @@ jobs:
 
       - name: Build the ARC-compatible runner
         env:
-          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}-r${{ env.IMAGE_REVISION }}
         run: |
           docker build \
             --build-arg SLIM_IMAGE=local/ubuntu-slim:${RUNNER_IMAGES_REF} \
@@ -46,10 +47,15 @@ jobs:
             --tag ${IMAGE}:${TAG} \
             .
 
+      - name: Verify the runtime tool path
+        env:
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}-r${{ env.IMAGE_REVISION }}
+        run: docker run --rm "${IMAGE}:${TAG}" go version
+
       - name: Publish the immutable runner image
         env:
           GHCR_TOKEN: ${{ github.token }}
-          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-go-${{ env.GO_VERSION }}-runner-${{ env.RUNNER_VERSION }}-r${{ env.IMAGE_REVISION }}
         run: |
           printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
           docker push "${IMAGE}:${TAG}"

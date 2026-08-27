@@ -20,6 +20,8 @@ RUN curl --fail --location --silent --show-error \
     && echo "${GO_SHA256}  /tmp/go.tar.gz" | sha256sum --check --strict \
     && tar --directory /usr/local --extract --gzip --file /tmp/go.tar.gz \
     && rm /tmp/go.tar.gz \
+    && sed --in-place 's#^PATH=#PATH=/usr/local/go/bin:#' /etc/environment \
+    && sed --in-place 's/^ImageOS=.*/ImageOS=ubuntu24/' /etc/environment \
     && go version
 
 RUN if ! getent group docker >/dev/null; then groupadd --gid 123 docker; fi \
