@@ -5,6 +5,9 @@ ARG GO_SHA256=1fc94b57134d51669c72173ad5d49fd62afb0f1db9bf3f798fd98ee423f8d730
 FROM ghcr.io/actions/actions-runner:2.336.0 AS actions_runner
 FROM ${SLIM_IMAGE}
 
+ARG GO_VERSION
+ARG GO_SHA256
+
 ENV ACTIONS_RUNNER_PRINT_LOG_TO_STDOUT=1 \
     HOME=/home/runner \
     ImageOS=ubuntu24 \
