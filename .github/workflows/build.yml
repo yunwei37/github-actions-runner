@@ -1,0 +1,55 @@
+name: Build Actions runner image
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/yunwei37/github-actions-runner
+  RUNNER_IMAGES_REF: eac270ed77ebb2e5896c8df1a13f81fbd71ed3b7
+  RUNNER_IMAGES_VERSION: "20260728.2"
+  RUNNER_VERSION: "2.336.0"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out image source
+        uses: actions/checkout@v7
+
+      - name: Check out the fixed GitHub runner-images source
+        uses: actions/checkout@v7
+        with:
+          repository: actions/runner-images
+          ref: ${{ env.RUNNER_IMAGES_REF }}
+          path: .upstream/runner-images
+
+      - name: Build the official Ubuntu Slim environment
+        run: |
+          docker build \
+            --file .upstream/runner-images/images/ubuntu-slim/Dockerfile \
+            --tag local/ubuntu-slim:${RUNNER_IMAGES_REF} \
+            .upstream/runner-images/images/ubuntu-slim
+
+      - name: Build the ARC-compatible runner
+        env:
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-runner-${{ env.RUNNER_VERSION }}
+        run: |
+          docker build \
+            --build-arg SLIM_IMAGE=local/ubuntu-slim:${RUNNER_IMAGES_REF} \
+            --label org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
+            --label org.opencontainers.image.revision=${GITHUB_SHA} \
+            --tag ${IMAGE}:${TAG} \
+            .
+
+      - name: Publish the immutable runner image
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+          TAG: ubuntu-slim-${{ env.RUNNER_IMAGES_VERSION }}-runner-${{ env.RUNNER_VERSION }}
+        run: |
+          printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          docker push "${IMAGE}:${TAG}"
+          docker inspect "${IMAGE}:${TAG}" --format 'image={{index .RepoDigests 0}}' >> "${GITHUB_STEP_SUMMARY}"
