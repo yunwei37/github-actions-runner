@@ -2,7 +2,7 @@
 # toolkit and the build dependencies bpftime's GPU workflow installs on every
 # job. RTX 5090 (sm_120) needs CUDA 12.8 or newer; the NVIDIA driver and
 # nvidia-smi come from the node through the nvidia runtime class.
-ARG BASE_IMAGE=ghcr.io/yunwei37/github-actions-runner@sha256:bebedbc5e52c1bab3de1f2ce65c59366de7cf67d903c777869317d385a0775c5
+ARG BASE_IMAGE=ghcr.io/yunwei37/github-actions-runner@sha256:9796abb3623109dec2e3cfff31dc81bc4c14127e14fe3386a354dc6da9938bbd
 FROM ${BASE_IMAGE}
 
 ARG CUDA_PACKAGE=cuda-toolkit-12-9
