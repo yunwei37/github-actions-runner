@@ -9,7 +9,7 @@ permissions:
 
 env:
   IMAGE: ghcr.io/yunwei37/github-actions-runner
-  TAG: ubuntu-slim-20260728.2-runner-2.336.0-cuda-12.9-llvm-18-r1
+  TAG: ubuntu-slim-20260728.2-runner-2.338.2-cuda-12.9-llvm-18-r1
 
 jobs:
   build:
