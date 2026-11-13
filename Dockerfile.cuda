@@ -1,0 +1,37 @@
+# GPU variant of the ARC runner: the shared Ubuntu Slim runner plus the CUDA
+# toolkit and the build dependencies bpftime's GPU workflow installs on every
+# job. RTX 5090 (sm_120) needs CUDA 12.8 or newer; the NVIDIA driver and
+# nvidia-smi come from the node through the nvidia runtime class.
+ARG BASE_IMAGE=ghcr.io/yunwei37/github-actions-runner@sha256:bebedbc5e52c1bab3de1f2ce65c59366de7cf67d903c777869317d385a0775c5
+FROM ${BASE_IMAGE}
+
+ARG CUDA_PACKAGE=cuda-toolkit-12-9
+ARG LLVM_MAJOR=18
+
+USER root
+
+RUN curl --fail --location --silent --show-error \
+      https://developer.download.nvidia.com/compute/cuda/repos/ubuntu2404/x86_64/cuda-keyring_1.1-1_all.deb \
+      --output /tmp/cuda-keyring.deb \
+    && dpkg -i /tmp/cuda-keyring.deb \
+    && rm /tmp/cuda-keyring.deb \
+    && apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+      "${CUDA_PACKAGE}" \
+      build-essential ca-certificates curl git pkg-config xz-utils cmake ninja-build \
+      libboost-all-dev libdw-dev libedit-dev libelf-dev libffi-dev libssl-dev \
+      libzstd-dev zlib1g-dev libcurl4-openssl-dev \
+      "llvm-${LLVM_MAJOR}" "llvm-${LLVM_MAJOR}-dev" "clang-${LLVM_MAJOR}" "lld-${LLVM_MAJOR}" \
+    && ln -sf "/usr/bin/clang-${LLVM_MAJOR}" /usr/local/bin/clang \
+    && ln -sf "/usr/bin/clang++-${LLVM_MAJOR}" /usr/local/bin/clang++ \
+    && ln -sf "/usr/bin/llvm-config-${LLVM_MAJOR}" /usr/local/bin/llvm-config \
+    && rm -rf /var/lib/apt/lists/* \
+    && sed --in-place 's#^PATH=#PATH=/usr/local/cuda/bin:#' /etc/environment \
+    && /usr/local/cuda/bin/nvcc --version
+
+ENV PATH=/usr/local/cuda/bin:${PATH} \
+    BPFTIME_CUDA_ROOT=/usr/local/cuda \
+    LLVM_DIR=/usr/lib/llvm-18/lib/cmake/llvm \
+    NVIDIA_DRIVER_CAPABILITIES=compute,utility
+
+USER runner
