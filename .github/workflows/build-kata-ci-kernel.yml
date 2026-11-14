@@ -11,7 +11,7 @@ env:
   IMAGE: ghcr.io/yunwei37/kata-ci-kernel
   KATA_VERSION: "4.3.1"
   KERNEL_VERSION: "6.18.56"
-  TAG: 6.18.56-kata-4.3.1-ci-r1
+  TAG: 6.18.56-kata-4.3.1-ci-r2
 
 jobs:
   build:
@@ -50,8 +50,8 @@ jobs:
       - name: Verify the configuration
         run: |
           cfg=$(ls out/share/kata-containers/config-*-debug)
-          grep -E '^CONFIG_(CROSS_MEMORY_ATTACH|CHECKPOINT_RESTORE|UPROBE_EVENTS|KPROBE_EVENTS|DEBUG_INFO_BTF|BPF_JIT)=y' "$cfg"
-          test "$(grep -c -E '^CONFIG_(CROSS_MEMORY_ATTACH|CHECKPOINT_RESTORE|UPROBE_EVENTS|KPROBE_EVENTS|DEBUG_INFO_BTF|BPF_JIT)=y' "$cfg")" = 6
+          grep -E '^CONFIG_(CROSS_MEMORY_ATTACH|CHECKPOINT_RESTORE|TRACEFS_AUTOMOUNT_DEPRECATED|UPROBE_EVENTS|KPROBE_EVENTS|DEBUG_INFO_BTF|BPF_JIT)=y' "$cfg"
+          test "$(grep -c -E '^CONFIG_(CROSS_MEMORY_ATTACH|CHECKPOINT_RESTORE|TRACEFS_AUTOMOUNT_DEPRECATED|UPROBE_EVENTS|KPROBE_EVENTS|DEBUG_INFO_BTF|BPF_JIT)=y' "$cfg")" = 7
 
       - name: Build the kernel image
         run: |

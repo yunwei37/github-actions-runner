@@ -23,6 +23,8 @@ that the eunomia-bpf CI runners boot in their Kata Containers VMs: Kata
 `4.3.1`'s debug kernel (Linux `6.18.56` with tracefs, uprobe and kprobe events,
 BTF and the BPF JIT) plus `kata-ci-kernel/ci.conf`, which adds what CI needs and
 Kata's kernels leave out (`CONFIG_CROSS_MEMORY_ATTACH` for
-`process_vm_readv`, `CONFIG_CHECKPOINT_RESTORE`). The workflow publishes
+`process_vm_readv`, `CONFIG_CHECKPOINT_RESTORE`, and
+`CONFIG_TRACEFS_AUTOMOUNT_DEPRECATED` for tools that read
+`/sys/kernel/debug/tracing`). The workflow publishes
 `ghcr.io/yunwei37/kata-ci-kernel` with `/kernel/vmlinux` and `/kernel/config`
 and records the digest in the run summary.
