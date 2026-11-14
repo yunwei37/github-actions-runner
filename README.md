@@ -15,3 +15,14 @@ Run **Build Actions runner image** manually in GitHub Actions. The workflow
 publishes `ghcr.io/yunwei37/github-actions-runner` and records its immutable
 digest in the run summary. Runtime manifests should always use that digest,
 not the mutable version tag.
+
+## Kata CI guest kernel
+
+`kata-ci-kernel/` and **Build Kata CI guest kernel** build the guest kernel
+that the eunomia-bpf CI runners boot in their Kata Containers VMs: Kata
+`4.3.1`'s debug kernel (Linux `6.18.56` with tracefs, uprobe and kprobe events,
+BTF and the BPF JIT) plus `kata-ci-kernel/ci.conf`, which adds what CI needs and
+Kata's kernels leave out (`CONFIG_CROSS_MEMORY_ATTACH` for
+`process_vm_readv`, `CONFIG_CHECKPOINT_RESTORE`). The workflow publishes
+`ghcr.io/yunwei37/kata-ci-kernel` with `/kernel/vmlinux` and `/kernel/config`
+and records the digest in the run summary.

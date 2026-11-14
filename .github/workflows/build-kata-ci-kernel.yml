@@ -1,0 +1,72 @@
+name: Build Kata CI guest kernel
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE: ghcr.io/yunwei37/kata-ci-kernel
+  KATA_VERSION: "4.3.1"
+  KERNEL_VERSION: "6.18.56"
+  TAG: 6.18.56-kata-4.3.1-ci-r1
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out image source
+        uses: actions/checkout@v7
+
+      - name: Check out Kata Containers
+        uses: actions/checkout@v7
+        with:
+          repository: kata-containers/kata-containers
+          ref: ${{ env.KATA_VERSION }}
+          path: kata
+
+      - name: Install kernel build tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            build-essential bc bison flex libelf-dev libssl-dev dwarves cpio rsync
+
+      # Kata's debug kernel (KERNEL_DEBUG_ENABLED adds its tracefs, uprobe,
+      # kprobe, BTF and debugfs fragments) plus kata-ci-kernel/ci.conf. The
+      # build fails if any requested option does not reach the final config.
+      - name: Build the kernel
+        working-directory: kata/tools/packaging/kernel
+        env:
+          KERNEL_DEBUG_ENABLED: "yes"
+        run: |
+          cp "${GITHUB_WORKSPACE}/kata-ci-kernel/ci.conf" configs/fragments/common/eunomia-ci.conf
+          ./build-kernel.sh -v "${KERNEL_VERSION}" -f setup
+          ./build-kernel.sh -v "${KERNEL_VERSION}" build
+          DESTDIR="${GITHUB_WORKSPACE}/out" PREFIX=/ ./build-kernel.sh -v "${KERNEL_VERSION}" install
+          ls -la "${GITHUB_WORKSPACE}/out/share/kata-containers"
+
+      - name: Verify the configuration
+        run: |
+          cfg=$(ls out/share/kata-containers/config-*-debug)
+          grep -E '^CONFIG_(CROSS_MEMORY_ATTACH|CHECKPOINT_RESTORE|UPROBE_EVENTS|KPROBE_EVENTS|DEBUG_INFO_BTF|BPF_JIT)=y' "$cfg"
+          test "$(grep -c -E '^CONFIG_(CROSS_MEMORY_ATTACH|CHECKPOINT_RESTORE|UPROBE_EVENTS|KPROBE_EVENTS|DEBUG_INFO_BTF|BPF_JIT)=y' "$cfg")" = 6
+
+      - name: Build the kernel image
+        run: |
+          cp -L out/share/kata-containers/vmlinux-debug.container kata-ci-kernel/vmlinux
+          cp out/share/kata-containers/config-*-debug kata-ci-kernel/config
+          docker build \
+            --label org.opencontainers.image.source=${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY} \
+            --label org.opencontainers.image.revision=${GITHUB_SHA} \
+            --tag "${IMAGE}:${TAG}" \
+            kata-ci-kernel
+
+      - name: Publish the immutable kernel image
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: |
+          printf '%s' "${GHCR_TOKEN}" | docker login ghcr.io --username "${GITHUB_ACTOR}" --password-stdin
+          docker push "${IMAGE}:${TAG}"
+          docker inspect "${IMAGE}:${TAG}" --format 'image={{index .RepoDigests 0}}' >> "${GITHUB_STEP_SUMMARY}"
